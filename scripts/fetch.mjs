@@ -45,7 +45,15 @@ export function parseFeed(xml, src) {
 }
 
 async function get(url, tries = 4) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { 'user-agent': 'BerlinNews/1.0 (RSS reader)', accept: 'application/rss+xml, application/atom+xml, application/json, text/xml, */*' } });
+  let res;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { 'user-agent': 'BerlinNews/1.0 (RSS reader)', accept: 'application/rss+xml, application/atom+xml, application/json, text/xml, */*' } });
+  } catch (e) {
+    // тимчасовий збій мережі: пробуємо ще раз
+    if (tries <= 1) throw e;
+    await new Promise(r => setTimeout(r, 5000));
+    return get(url, tries - 1);
+  }
   // 429: сервіс просить зачекати
   if (res.status === 429 && tries > 1) {
     const wait = Math.min(Number(res.headers.get('retry-after')) || 10, 60);
