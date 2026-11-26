@@ -28,6 +28,23 @@ jobs:
       - run: node scripts/fetch.mjs
         env:
           PREV_URL: ${{ steps.pages.outputs.base_url }}/data/news.json
+      # Переклад: якщо крок не вдасться, сайт все одно опублікується
+      - uses: actions/setup-python@v5
+        continue-on-error: true
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: ~/.cache/huggingface
+          key: opus-mt-uk-v1
+      - name: Переклад українською
+        continue-on-error: true
+        timeout-minutes: 30
+        run: |
+          pip install -q torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -q transformers==4.48.3 sentencepiece==0.2.0 sacremoses==0.1.1
+          python scripts/translate.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
