@@ -37,7 +37,7 @@ jobs:
         continue-on-error: true
         with:
           path: ~/.cache/huggingface
-          key: opus-mt-uk-v1
+          key: nllb-600m-v1
       - name: Переклад українською
         continue-on-error: true
         timeout-minutes: 30

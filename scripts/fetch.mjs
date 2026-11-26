@@ -95,7 +95,7 @@ export function merge(old, fresh, now = Date.now()) {
     else if (prev.source === i.source) {
       // готовий переклад зберігаємо, поки текст не змінився
       const same = prev.title === i.title && prev.text === i.text && prev.titleUk;
-      map.set(key, same ? { ...i, titleUk: prev.titleUk, textUk: prev.textUk } : i);
+      map.set(key, same ? { ...i, titleUk: prev.titleUk, textUk: prev.textUk, trV: prev.trV } : i);
     }
   }
   return [...map.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, MAX_TOTAL);
