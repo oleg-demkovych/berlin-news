@@ -2,69 +2,93 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Берлін сьогодні</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#c8102e">
+<meta name="theme-color" content="#fafafa">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Берлін">
 <style>
-:root{--bg:#f3f4f8;--card:#fff;--ink:#151726;--mute:#5d6178;--line:#dfe1ea;--acc:#c8102e;--on:#fff;--hot:#d9480f}
-:root[data-theme=dark]{--bg:#0f1019;--card:#181a27;--ink:#eceefa;--mute:#9ca0bb;--line:#2b2e42;--acc:#ff6b7d;--on:#12121f;--hot:#ff8a50}
+/* Токени в дусі shadcn/ui (нейтральна палітра zinc + червоний акцент) */
+:root{--bg:#fafafa;--card:#fff;--fg:#09090b;--muted:#f4f4f5;--mfg:#63636b;--line:#e4e4e7;--primary:#18181b;--pfg:#fafafa;--acc:#c8102e;--ring:#a1a1aa;--r:10px;color-scheme:light}
+:root[data-theme=dark]{--bg:#09090b;--card:#131316;--fg:#fafafa;--muted:#27272a;--mfg:#a1a1aa;--line:#27272a;--primary:#fafafa;--pfg:#18181b;--acc:#ff5c70;--ring:#71717a;color-scheme:dark}
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
-.wrap{max-width:1180px;margin:auto;padding:0 16px}
-header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:24px 8px}
-h1{font-size:2rem;letter-spacing:-.03em;margin-right:auto}h1 span{color:var(--acc)}
-button,input,select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 13px}
-button{cursor:pointer}
-:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.meta{color:var(--mute);font-size:.875rem}
-.bar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding-block:10px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-#q{flex:1;min-width:200px}
-#cats{flex-wrap:nowrap;overflow-x:auto;padding:10px 2px 2px}
-.chip{border-radius:99px;white-space:nowrap;font-size:.875rem}
-.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--on)}
-#list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px;padding-block:18px}
-article{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-article img{width:100%;aspect-ratio:2/1;object-fit:cover;background:var(--line)}
-.body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;overflow-wrap:anywhere}
-h2{font-size:1.08rem;line-height:1.35}h2 a{color:inherit;text-decoration:none}h2 a:hover{color:var(--acc);text-decoration:underline}
-.read{opacity:.55}
-.new{color:var(--hot);font-weight:700}
-.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.full{color:var(--acc);margin-left:auto}
-.star{padding:2px 10px}.star[aria-pressed=true]{color:var(--hot);border-color:var(--hot)}
-#more{display:block;margin:0 auto 24px}
-#empty{padding:40px 0;text-align:center;grid-column:1/-1}
-@media(max-width:640px){.bar{position:static}}
-details{padding-block:12px 32px}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:1200px;margin:auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+header{display:flex;align-items:center;gap:8px;height:60px}
+.logo{width:32px;height:32px;border-radius:8px;background:#c8102e;color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+h1{font-size:1.05rem;letter-spacing:-.02em;margin-right:auto;white-space:nowrap}
+button,input,select{font:inherit;color:inherit}
+button,select,input{height:36px;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;font-weight:500;font-size:.875rem;cursor:pointer;transition:background .15s,color .15s}
+button:hover{background:var(--muted)}button:disabled{opacity:.5;cursor:default}
+.icon{width:36px;padding:0;flex:none}
+svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#install{background:var(--primary);color:var(--pfg);border-color:var(--primary)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+#lang::after{content:"";width:30px;height:18px;border-radius:99px;background:radial-gradient(circle at 9px 50%,#fff 6px,transparent 6.5px) var(--ring);transition:background .15s}
+#lang[aria-pressed=true]::after{background:radial-gradient(circle at 21px 50%,#fff 6px,transparent 6.5px) var(--acc)}
+#cats{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:10px}
+.chip{height:32px;white-space:nowrap;border-color:transparent;background:transparent;color:var(--mfg);flex:none}
+.chip[aria-pressed=true]{background:var(--primary);color:var(--pfg)}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding-top:16px}
+.search{position:relative}.search svg{position:absolute;left:11px;top:10px;color:var(--mfg)}
+input{width:100%;padding:0 12px 0 36px;font-size:16px}
+select{padding:0 10px;font-size:.875rem;min-width:0}
+.meta{color:var(--mfg);font-size:.8125rem}
+.info{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:12px}
+#list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:16px;padding-block:14px 20px}
+article{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 2px #0000000a;transition:border-color .15s,box-shadow .15s}
+article:hover{border-color:var(--ring);box-shadow:0 8px 24px #00000014}
+article img{width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--muted)}
+.body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1;overflow-wrap:anywhere}
+.badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.badge{font-size:.75rem;font-weight:600;line-height:1;padding:5px 8px;border-radius:6px;background:var(--muted)}
+.badge.new{background:var(--acc);color:var(--bg)}
+h2{font-size:1.05rem;line-height:1.38;letter-spacing:-.01em;text-wrap:pretty}
+h2 a{color:inherit;text-decoration:none}h2 a:hover{text-decoration:underline;text-underline-offset:3px}
+.desc{color:var(--mfg);font-size:.875rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.read h2,.read img{opacity:.55}
+.foot{margin-top:auto;padding-top:4px;display:flex;align-items:center;gap:8px}
+.full{margin-left:auto;color:var(--fg);font-weight:500;text-decoration:none;padding:6px 8px;border-radius:8px}.full:hover{background:var(--muted)}
+.foot>.meta,.full{white-space:nowrap}
+@media(max-width:380px){.foot>.meta{display:none}}
+.star{margin-left:0}.foot>.meta+.star{margin-left:auto}
+.star[aria-pressed=true]{color:var(--acc)}.star[aria-pressed=true] svg{fill:currentColor}
+#more{display:flex;margin:0 auto 20px}
+#empty{padding:48px 16px;text-align:center;grid-column:1/-1;border:1px dashed var(--line);border-radius:14px}
+.skel{height:260px;border-radius:14px;background:var(--muted);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+@media(max-width:640px){.filters{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.label{display:none}#lang{padding:0 8px}h1{overflow:hidden;text-overflow:ellipsis;min-width:0}}
+@media(max-width:380px){h1{font-size:0}h1{margin-right:auto}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+details{padding-block:8px 32px}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<header class="wrap">
-  <h1>Берлін<span> </span>сьогодні</h1>
-  <span class="meta" id="status" role="status">Завантаження…</span>
-  <button id="lang" class="chip">Перекласти українською</button>
-  <button id="install" hidden>Встановити</button>
-  <button id="refresh">Оновити</button>
-  <button id="theme" aria-label="Змінити тему">◐</button>
-</header>
-<div class="bar"><div class="wrap">
-  <div class="row">
-    <input id="q" type="search" placeholder="Пошук: BVG, Mitte, Miete…" aria-label="Пошук">
+<div class="top"><div class="wrap">
+  <header>
+    <span class="logo" aria-hidden="true">Б</span>
+    <h1>Берлін сьогодні</h1>
+    <button id="lang" aria-label="Переклад українською" title="Переклад українською">UA<span class="label">переклад</span></button>
+    <button id="install" hidden>Встановити</button>
+    <button id="refresh" class="icon" aria-label="Оновити" title="Оновити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button>
+    <button id="theme" class="icon" aria-label="Змінити тему" title="Змінити тему"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+  </header>
+  <nav id="cats" aria-label="Категорії"></nav>
+</div></div>
+<main class="wrap">
+  <div class="filters">
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" placeholder="Пошук: BVG, Mitte, Miete…" aria-label="Пошук"></label>
     <select id="period" aria-label="Період"><option value="0">За весь час</option><option value="1">За 24 години</option><option value="7">За тиждень</option><option value="30">За місяць</option></select>
     <select id="source" aria-label="Джерело"></select>
   </div>
-  <div class="row" id="cats"></div>
-</div></div>
-<main class="wrap">
-  <p class="meta" id="count" style="padding-top:14px"></p>
-  <div id="list"></div>
-  <button id="more">Показати ще</button>
+  <div class="info meta"><span id="count"></span><span id="status" role="status">Завантаження…</span></div>
+  <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+  <button id="more" hidden>Показати ще</button>
   <details class="meta"><summary>Стан джерел</summary><div id="health"></div></details>
 </main>
 <script>
@@ -138,16 +162,17 @@ function card(i) {
   if (web(i.image)) a.append(el('img', { src: i.image, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer', onerror() { this.remove(); } }));
   const mark = () => { read.add(i.url); a.className = 'read'; store.set('read', [...read].slice(-3000)); };
   const link = el('a', { href: i.url, target: '_blank', rel: 'noopener noreferrer', textContent: tr ? t.titleUk : i.title, title: tr ? i.title : '', lang: tr ? 'uk' : '', onclick: mark, onauxclick: mark });
-  const star = el('button', { className: 'star', onclick() {
+  const star = el('button', { className: 'icon star', onclick() {
     saved.has(i.url) ? saved.delete(i.url) : saved.set(i.url, i);
     store.set('saved', [...saved]); paint();
     if (cat === '★ Збережене') render();
   } });
-  const paint = () => { const on = saved.has(i.url); star.textContent = on ? '★' : '☆'; star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', on ? 'Прибрати зі збереженого' : 'Зберегти'); };
+  const paint = () => { const on = saved.has(i.url); star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', on ? 'Прибрати зі збереженого' : 'Зберегти'); };
+  star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>'; // сталий рядок, без даних зі стрічок
   paint();
-  const meta = el('p', { className: 'meta' }, `${i.source} · ${ago(i.date)}${tr ? ' · автопереклад' : ''}`);
-  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'new', textContent: ' · нове' }));
-  a.append(el('div', { className: 'body' }, meta, el('h2', {}, link), el('p', { className: 'meta', textContent: (tr ? t.textUk : i.text) || '' }),
+  const meta = el('div', { className: 'badges' }, el('span', { className: 'badge', textContent: i.source }), el('span', { className: 'meta', textContent: ago(i.date) + (tr ? ' · автопереклад' : '') }));
+  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'badge new', textContent: 'нове' }));
+  a.append(el('div', { className: 'body' }, meta, el('h2', {}, link), el('p', { className: 'desc', textContent: (tr ? t.textUk : i.text) || '' }),
     el('div', { className: 'foot' }, el('span', { className: 'meta', textContent: i.cat }), ...(i.cat === 'Українською' ? [] : [el('a', { className: 'meta full', target: '_blank', rel: 'noopener noreferrer', textContent: 'Стаття українською ↗', href: 'https://translate.google.com/translate?sl=auto&tl=uk&u=' + encodeURIComponent(i.url), onclick: mark })]), star)));
   return a;
 }
@@ -167,10 +192,13 @@ function render() {
 ['q','period','source'].forEach(id => $(id).addEventListener('input', () => { limit = PAGE; render(); }));
 $('more').onclick = () => { limit += PAGE; render(); };
 $('refresh').onclick = load;
-const paintLang = () => { $('lang').setAttribute('aria-pressed', uk); $('lang').textContent = uk ? 'Показати оригінал' : 'Перекласти українською'; };
+const paintLang = () => $('lang').setAttribute('aria-pressed', uk);
 $('lang').onclick = () => { uk = !uk; store.set('uk', uk); paintLang(); render(); };
 paintLang();
-const setTheme = t => document.documentElement.dataset.theme = t;
+const setTheme = t => {
+  document.documentElement.dataset.theme = t;
+  document.querySelector('meta[name=theme-color]').content = t === 'dark' ? '#09090b' : '#fafafa';
+};
 setTheme(store.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 $('theme').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setTheme(t); store.set('theme', t); };
 // Перевірка щохвилини переживає сон комп'ютера. Поки даних немає, пробуємо частіше.
