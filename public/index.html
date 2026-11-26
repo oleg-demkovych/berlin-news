@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Берлін сьогодні</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Берлін">
 <style>
 :root{--bg:#f3f4f8;--card:#fff;--ink:#151726;--mute:#5d6178;--line:#dfe1ea;--acc:#c8102e;--on:#fff;--hot:#d9480f}
 :root[data-theme=dark]{--bg:#0f1019;--card:#181a27;--ink:#eceefa;--mute:#9ca0bb;--line:#2b2e42;--acc:#ff6b7d;--on:#12121f;--hot:#ff8a50}
@@ -44,6 +49,7 @@ details{padding-block:12px 32px}
   <h1>Берлін<span> </span>сьогодні</h1>
   <span class="meta" id="status" role="status">Завантаження…</span>
   <button id="lang" class="chip">Перекласти українською</button>
+  <button id="install" hidden>Встановити</button>
   <button id="refresh">Оновити</button>
   <button id="theme" aria-label="Змінити тему">◐</button>
 </header>
@@ -174,6 +180,12 @@ function tick() {
 }
 setInterval(tick, 60e3);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+// PWA: офлайн-режим і кнопка встановлення (Android, Chrome, Edge)
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+let prompt_;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt_ = e; $('install').hidden = false; });
+$('install').onclick = async () => { $('install').hidden = true; await prompt_?.prompt(); prompt_ = null; };
+addEventListener('appinstalled', () => $('install').hidden = true);
 fillCats(); load();
 </script>
 </body>

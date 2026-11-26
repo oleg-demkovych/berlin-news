@@ -7,6 +7,11 @@ const PORT = process.env.PORT || 3000;
 const files = {
   '/': ['public/index.html', 'text/html'],
   '/index.html': ['public/index.html', 'text/html'],
+  '/manifest.webmanifest': ['public/manifest.webmanifest', 'application/manifest+json'],
+  '/sw.js': ['public/sw.js', 'text/javascript'],
+  '/icon-192.png': ['public/icon-192.png', 'image/png'],
+  '/icon-512.png': ['public/icon-512.png', 'image/png'],
+  '/apple-touch-icon.png': ['public/apple-touch-icon.png', 'image/png'],
   '/data/news.json': ['public/data/news.json', 'application/json'],
 };
 
