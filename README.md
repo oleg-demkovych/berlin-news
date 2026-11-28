@@ -19,12 +19,14 @@
 
 | Категорія | Видання |
 |---|---|
-| Новини | rbb24, Tagesspiegel, Berliner Morgenpost, Berliner Zeitung, taz Berlin |
-| Поліція | Поліція Берліна |
+| Новини | rbb24 Politik, rbb24 Wirtschaft, rbb24 Panorama, Tagesspiegel, Berliner Morgenpost, taz Berlin, rbb24, Berliner Zeitung |
+| Поліція | Berliner Zeitung: поліція, Поліція Берліна |
 | Місто | Entwicklungsstadt |
-| Культура і дозвілля | Mit Vergnügen, iHeartBerlin |
-| English | The Local Berlin, The Berlin Spectator |
-| Українською | DW (лише матеріали зі згадкою «Берлін») |
+| Райони | QIEZ, neukoellner.net, Weddingweiser, Brunnenmagazin, Prenzlauer Berg Nachrichten |
+| Культура і дозвілля | Berliner Zeitung: культура, rbb24 Kultur, Mit Vergnügen, iHeartBerlin |
+| Спорт | BZ: Union Berlin, BZ: Hertha BSC, rbb24 Sport |
+| English | Berliner Zeitung English, Slow Travel Berlin, The Local Berlin, The Berlin Spectator |
+| Українською | DW українською |
 
 Щоб додати джерело, допишіть його в `public/sources.json`:
 

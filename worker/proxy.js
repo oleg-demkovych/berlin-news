@@ -1,6 +1,6 @@
 // Cloudflare Worker: віддає застосунку лише стрічки з дозволених доменів
 const ORIGIN = 'https://oleg-demkovych.github.io';
-const HOSTS = ["berlinspectator.com", "entwicklungsstadt.de", "feeds.thelocal.com", "mitvergnuegen.com", "rss.dw.com", "taz.de", "www.berlin.de", "www.berliner-zeitung.de", "www.iheartberlin.de", "www.morgenpost.de", "www.rbb24.de", "www.tagesspiegel.de"];
+const HOSTS = ["berlinspectator.com", "brunnenmagazin.de", "entwicklungsstadt.de", "feeds.thelocal.com", "mitvergnuegen.com", "neukoellner.net", "rss.dw.com", "taz.de", "weddingweiser.de", "www.berlin.de", "www.berliner-zeitung.de", "www.iheartberlin.de", "www.morgenpost.de", "www.prenzlauerberg-nachrichten.de", "www.qiez.de", "www.rbb24.de", "www.slowtravelberlin.com", "www.tagesspiegel.de"];
 
 export default {
   async fetch(request) {
