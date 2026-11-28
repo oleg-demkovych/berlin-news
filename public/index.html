@@ -202,7 +202,7 @@ function showStatus() {
   if (!busy && updated) $('status').textContent = `Оновлено ${ago(updated)}` + (partial ? ` · ${partial}` : '');
 }
 
-const VERSION = 8;
+const VERSION = 9;
 // Свайп униз від верху сторінки, як у мобільних застосунках
 const PULL = 55, MAX = 120, HOLD = 56;
 const ptr = $('ptr'), page = document.querySelector('main');

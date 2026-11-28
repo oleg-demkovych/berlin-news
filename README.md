@@ -19,13 +19,13 @@
 
 | Категорія | Видання |
 |---|---|
-| Новини | rbb24 Politik, rbb24 Wirtschaft, rbb24 Panorama, Tagesspiegel, Berliner Morgenpost, taz Berlin, rbb24, Berliner Zeitung |
-| Поліція | Berliner Zeitung: поліція, Поліція Берліна |
+| Новини | rbb24 Politik, rbb24 Wirtschaft, rbb24 Panorama, Tagesspiegel, Berliner Morgenpost, taz Berlin, Berliner Zeitung: новини, Berliner Zeitung: політика, Berliner Zeitung: економіка, Berliner Kurier, rbb24, Berliner Zeitung |
+| Поліція | Поліція Берліна |
 | Місто | Entwicklungsstadt |
-| Райони | QIEZ, neukoellner.net, Weddingweiser, Brunnenmagazin, Prenzlauer Berg Nachrichten |
-| Культура і дозвілля | Berliner Zeitung: культура, rbb24 Kultur, Mit Vergnügen, iHeartBerlin |
-| Спорт | BZ: Union Berlin, BZ: Hertha BSC, rbb24 Sport |
-| English | Berliner Zeitung English, Slow Travel Berlin, The Local Berlin, The Berlin Spectator |
+| Райони | QIEZ, Weddingweiser, Brunnenmagazin, Prenzlauer Berg Nachrichten, Pankower Allgemeine Zeitung, Kiez und Kneipe |
+| Культура і дозвілля | Berliner Zeitung: культура, rbb24 Kultur, Mit Vergnügen, iHeartBerlin, Cee Cee, Berlin Food Stories, Digital in Berlin |
+| Спорт | rbb24 Sport |
+| English | Slow Travel Berlin, The Berlin Spectator |
 | Українською | DW українською |
 
 Щоб додати джерело, допишіть його в `public/sources.json`:
@@ -35,6 +35,8 @@
 ```
 
 Необов'язкові поля: `filter` (регулярний вираз для відбору) і `max` (ліміт матеріалів).
+Перевірити, які стрічки відповідають: Actions → «Перевірка джерел» → Run workflow.
+
 ## Як це працює
 Усі новини завантажуються тільки на пристрої: під час відкриття, свайпом, кнопкою та кожні 10 хвилин, поки застосунок відкритий. Завантажене зберігається в браузері.
 
@@ -64,6 +66,7 @@ node server.mjs
 ## Структура
 ```
 public/            застосунок, список джерел, service worker, іконки
+scripts/           перевірка джерел
 worker/            власний посередник (необов'язково)
 server.mjs         локальний сервер
 .github/workflows/ публікація сайту
