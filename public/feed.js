@@ -63,7 +63,7 @@ export function merge(old, fresh, now = Date.now()) {
     const key = i.url.replace(/[?#]utm_.*$/, '').replace(/\/$/, '');
     const prev = map.get(key);
     // перше джерело залишається власником запису, свіжі дані оновлюють лише його
-    if (!prev || prev.source === i.source) { const { titleUk, textUk, trV, ...item } = i; map.set(key, item); }
+    if (!prev || prev.source === i.source) map.set(key, i);
   }
   return [...map.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, MAX_TOTAL);
 }

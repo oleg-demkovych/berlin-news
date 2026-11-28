@@ -71,28 +71,26 @@ html,body{overscroll-behavior-y:contain}
 <div class="top"><div class="wrap">
   <header>
     <span class="logo" aria-hidden="true">Б</span>
-    <h1 data-i18n="title">Берлін сьогодні</h1>
-    <select id="lang" data-aria="language"></select>
-    <button id="install" data-i18n="install" hidden>Встановити</button>
-    <button id="refresh" class="icon" data-aria="refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button>
-    <button id="theme" class="icon" data-aria="theme"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+    <h1>Берлін сьогодні</h1>
+    <button id="install" hidden>Встановити</button>
+    <button id="refresh" class="icon" aria-label="Оновити" title="Оновити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button>
+    <button id="theme" class="icon" aria-label="Змінити тему" title="Змінити тему"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
   </header>
-  <nav id="cats" data-aria="categories"></nav>
+  <nav id="cats" aria-label="Категорії"></nav>
 </div></div>
 <main class="wrap">
   <div class="filters">
-    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" data-placeholder="searchHint" data-aria="search"></label>
-    <select id="period" data-aria="period"><option value="0" data-i18n="allTime">За весь час</option><option value="1" data-i18n="day">За 24 години</option><option value="7" data-i18n="week">За тиждень</option><option value="30" data-i18n="month">За місяць</option></select>
-    <select id="source" data-aria="source"></select>
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" placeholder="Пошук: BVG, Mitte, Miete…" aria-label="Пошук"></label>
+    <select id="period" aria-label="Період"><option value="0">За весь час</option><option value="1">За 24 години</option><option value="7">За тиждень</option><option value="30">За місяць</option></select>
+    <select id="source" aria-label="Джерело"></select>
   </div>
-  <div class="info meta"><span id="count"></span><span id="status" role="status" data-i18n="loading">Завантаження…</span></div>
+  <div class="info meta"><span id="count"></span><span id="status" role="status">Завантаження…</span></div>
   <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
-  <button id="more" data-i18n="more" hidden>Показати ще</button>
-  <details class="meta"><summary data-i18n="health">Стан джерел</summary><div id="health"></div></details>
+  <button id="more" hidden>Показати ще</button>
+  <details class="meta"><summary>Стан джерел</summary><div id="health"></div></details>
 </main>
 <script type="module">
 import { decodeBytes, readSource, merge } from './feed.js';
-import { LANGS, LOCALES, translator, detect } from './i18n.js';
 // Адреса власного посередника з worker/proxy.js (необов'язково)
 const PROXY = '';
 const $ = id => document.getElementById(id);
@@ -106,13 +104,10 @@ const saved = new Map(store.get('saved', []));
 const read = new Set(store.get('read', []));
 const lastVisit = store.get('visit', 0);
 store.set('visit', Date.now());
+try { localStorage.removeItem('berlin:lang'); localStorage.removeItem('berlin:uk'); } catch {}
 
-let lang = store.get('lang', null);
-if (!Object.hasOwn(LANGS, lang)) lang = detect(navigator.languages);
-let t = translator(lang), rtf, lastHealth = [], lastStatus = null;
-// статус зберігаємо ключем, щоб перекласти його після зміни мови
-function setStatus(key, vars) { lastStatus = [key, vars]; $('status').removeAttribute('data-i18n'); $('status').textContent = t(key, vars); }
 const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+const rtf = new Intl.RelativeTimeFormat('uk', { numeric: 'auto' });
 function ago(d) {
   const m = Math.round((Date.parse(d) - Date.now()) / 60000);
   if (Math.abs(m) < 60) return rtf.format(m, 'minute');
@@ -158,8 +153,8 @@ async function loadSnapshot() {
 async function load() {
   if (busy) return;
   busy = true; $('refresh').disabled = true; loadedAt = Date.now();
-  setStatus('updating');
-  let message = ['failed'];
+  $('status').textContent = 'Оновлення…';
+  let message = '';
   try {
     const r = await fetch('sources.json', { cache: 'no-cache' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -168,7 +163,7 @@ async function load() {
     const results = await Promise.all(sources.map(async src => {
       try { const list = await fetchSource(src); return { name: src.name, count: list.length, items: list }; }
       catch (e) { return { name: src.name, items: [], error: e.message }; }
-      finally { setStatus('progress', { n: ++done, total: sources.length }); }
+      finally { $('status').textContent = `Оновлення ${++done} з ${sources.length}…`; }
     }));
     const ok = results.filter(x => !x.error).length;
     health(results);
@@ -177,23 +172,23 @@ async function load() {
       updated = new Date().toISOString(); store.set('updated', updated);
       show();
     }
-    if (ok === sources.length) message = ['updatedAll'];
+    if (ok === sources.length) message = 'Оновлено всі джерела';
     else {
       const copy = await loadSnapshot();
-      message = ok ? ['updatedSome', { n: ok, total: sources.length }]
-        : [copy && navigator.onLine ? 'copy' : 'failed'];
+      message = ok ? `Напряму оновлено ${ok} з ${sources.length} джерел`
+        : copy && navigator.onLine ? 'Напряму не вдалося, показано копію з сервера' : 'Не вдалося оновити. Перевірте інтернет';
     }
   } catch (e) {
-    message = ['failed'];
+    message = 'Не вдалося оновити. Перевірте інтернет';
   } finally {
     busy = false; $('refresh').disabled = false;
-    setStatus(...message);
+    $('status').textContent = message;
     if (!items.length) render();
   }
-  return t(...message);
+  return message;
 }
 function showStatus() {
-  if (!busy && updated) setStatus('updatedAgo', { time: ago(updated) });
+  if (!busy && updated) $('status').textContent = `Оновлено ${ago(updated)}`;
 }
 
 // Свайп униз від верху сторінки
@@ -213,34 +208,32 @@ addEventListener('touchmove', e => {
   if (e.cancelable) e.preventDefault();
   pull = Math.max(0, dy);
   clearTimeout(hideTimer); ptr.classList.add('drag');
-  bubble(t(pull > 90 ? 'release' : 'pull'), Math.min(pull * .6, 80));
+  bubble(pull > 90 ? '↻ Відпустіть, щоб оновити' : '↓ Потягніть, щоб оновити', Math.min(pull * .6, 80));
 }, { passive: false });
 async function release(cancelled) {
   if (!start) return;
   const go = !cancelled && pull > 90;
   start = null; pull = 0; ptr.classList.remove('drag');
   if (!go) return bubble(ptr.textContent, 0);
-  bubble(t('updating'), 70);
-  bubble(await load() || t('updating'), 70);
+  bubble('Оновлення…', 70);
+  bubble(await load(), 70);
   hideTimer = setTimeout(() => bubble(ptr.textContent, 0), 2500);
 }
 addEventListener('touchend', () => release(false));
 addEventListener('touchcancel', () => release(true));
 function health(list) {
-  lastHealth = list;
-  const why = e => e === 'порожня або нерозпізнана стрічка' ? t('badFeed') : e;
-  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${t(s.name)}: ${why(s.error)}` : `✓ ${t(s.name)}: ${s.count}` })));
+  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${s.name}: ${s.error}` : `✓ ${s.name}: ${s.count}` })));
 }
 function fillSources() {
   const cur = $('source').value;
-  const names = [...new Set(items.map(i => i.source))].sort((a, b) => t(a).localeCompare(t(b), LOCALES[lang]));
-  $('source').replaceChildren(new Option(t('allSources'), ''), ...names.map(n => new Option(t(n), n)));
+  const names = [...new Set(items.map(i => i.source))].sort((a, b) => a.localeCompare(b, 'uk'));
+  $('source').replaceChildren(new Option('Усі джерела', ''), ...names.map(n => new Option(n, n)));
   $('source').value = names.includes(cur) ? cur : '';
 }
 function fillCats() {
   const cats = ['Усі', '★ Збережене', ...new Set(items.map(i => i.cat))];
   $('cats').replaceChildren(...cats.map(c => {
-    const b = el('button', { className: 'chip', textContent: t(c === 'Усі' ? 'all' : c === '★ Збережене' ? 'saved' : c), onclick() { cat = c; limit = PAGE; fillCats(); render(); } });
+    const b = el('button', { className: 'chip', textContent: c, onclick() { cat = c; limit = PAGE; fillCats(); render(); } });
     b.setAttribute('aria-pressed', c === cat);
     return b;
   }));
@@ -255,13 +248,13 @@ function card(i) {
     store.set('saved', [...saved]); paint();
     if (cat === '★ Збережене') render();
   } });
-  const paint = () => { const on = saved.has(i.url); star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', t(on ? 'unsave' : 'save')); };
+  const paint = () => { const on = saved.has(i.url); star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', on ? 'Прибрати зі збереженого' : 'Зберегти'); };
   star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>'; // сталий рядок, без даних зі стрічок
   paint();
-  const meta = el('div', { className: 'badges' }, el('span', { className: 'badge', textContent: t(i.source) }), el('span', { className: 'meta', textContent: ago(i.date) }));
-  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'badge new', textContent: t('new') }));
+  const meta = el('div', { className: 'badges' }, el('span', { className: 'badge', textContent: i.source }), el('span', { className: 'meta', textContent: ago(i.date) }));
+  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'badge new', textContent: 'нове' }));
   a.append(el('div', { className: 'body' }, meta, el('h2', {}, link), el('p', { className: 'desc', textContent: i.text || '' }),
-    el('div', { className: 'foot' }, el('span', { className: 'meta', textContent: t(i.cat) }), star)));
+    el('div', { className: 'foot' }, el('span', { className: 'meta', textContent: i.cat }), star)));
   return a;
 }
 function render() {
@@ -271,29 +264,12 @@ function render() {
     (cat === 'Усі' || cat === '★ Збережене' || i.cat === cat) &&
     (!src || i.source === src) &&
     (!days || Date.now() - Date.parse(i.date) < days * 864e5) &&
-    words.every(w => `${i.title} ${i.text} ${i.source} ${t(i.source)}`.toLowerCase().includes(w)));
-  $('count').textContent = t('count', { n: list.length });
+    words.every(w => `${i.title} ${i.text} ${i.source}`.toLowerCase().includes(w)));
+  $('count').textContent = `Матеріалів: ${list.length}`;
   $('list').replaceChildren(...list.slice(0, limit).map(card));
-  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: t(items.length || cat === '★ Збережене' ? 'nothing' : 'noNews') }));
+  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: items.length || cat === '★ Збережене' ? 'Нічого не знайдено. Змініть фільтри або пошук.' : 'Новин ще немає. Якщо сервер щойно запущено, вони зʼявляться за кілька хвилин.' }));
   $('more').hidden = list.length <= limit;
 }
-function applyLang() {
-  t = translator(lang);
-  rtf = new Intl.RelativeTimeFormat(LOCALES[lang], { numeric: 'auto' });
-  document.documentElement.lang = LOCALES[lang];
-  document.title = t('title');
-  document.querySelectorAll('[data-i18n]').forEach(n => n.textContent = t(n.dataset.i18n));
-  document.querySelectorAll('[data-placeholder]').forEach(n => n.placeholder = t(n.dataset.placeholder));
-  document.querySelectorAll('[data-aria]').forEach(n => { n.setAttribute('aria-label', t(n.dataset.aria)); n.title = t(n.dataset.aria); });
-}
-$('lang').replaceChildren(...Object.entries(LANGS).map(([value, label]) => new Option(label, value)));
-$('lang').value = lang;
-$('lang').onchange = () => {
-  lang = $('lang').value; store.set('lang', lang); applyLang();
-  fillSources(); fillCats(); health(lastHealth); if (items.length || cat === '★ Збережене') render();
-  if (busy) setStatus(...lastStatus); else showStatus();
-};
-applyLang();
 ['q','period','source'].forEach(id => $(id).addEventListener('input', () => { limit = PAGE; render(); }));
 $('more').onclick = () => { limit += PAGE; render(); };
 $('refresh').onclick = load;

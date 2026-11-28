@@ -13,7 +13,6 @@ const files = {
   '/icon-512.png': ['public/icon-512.png', 'image/png'],
   '/apple-touch-icon.png': ['public/apple-touch-icon.png', 'image/png'],
   '/feed.js': ['public/feed.js', 'text/javascript'],
-  '/i18n.js': ['public/i18n.js', 'text/javascript'],
   '/sources.json': ['public/sources.json', 'application/json'],
   '/data/news.json': ['public/data/news.json', 'application/json'],
 };
