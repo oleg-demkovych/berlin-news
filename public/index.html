@@ -152,6 +152,7 @@ async function loadSnapshot() {
     const r = await fetch('data/news.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return false;
     const data = await r.json();
+    serverTime = data.updated;
     // копія з сервера лише доповнює: завантажене напряму має перевагу
     items = merge(data.items.filter(i => web(i.url)), items);
     show();
@@ -159,6 +160,8 @@ async function loadSnapshot() {
   } catch { return false; }
 }
 let current;
+let serverTime = null, partial = null; // вік копії з сервера та підсумок неповного оновлення
+const partialText = () => `Напряму ${partial.ok} з ${partial.total}` + (serverTime ? ` · копія з сервера: ${ago(serverTime)}` : '');
 // якщо оновлення вже триває, свайп чекає саме на нього
 function load() {
   if (!busy) current = fetchAll();
@@ -187,11 +190,11 @@ async function fetchAll() {
       updated = new Date().toISOString(); store.set('updated', updated);
       show();
     }
-    if (ok === sources.length) message = 'Оновлено всі джерела';
+    if (ok === sources.length) { partial = null; message = 'Оновлено всі джерела'; }
     else {
       const copy = await snapshot;
-      message = ok ? `Напряму оновлено ${ok} з ${sources.length} джерел`
-        : copy && navigator.onLine ? 'Напряму не вдалося, показано копію з сервера' : 'Не вдалося оновити. Перевірте інтернет';
+      partial = { ok, total: sources.length };
+      message = copy && navigator.onLine ? partialText() : 'Не вдалося оновити. Перевірте інтернет';
     }
   } catch (e) {
     message = 'Не вдалося оновити. Перевірте інтернет';
@@ -203,10 +206,12 @@ async function fetchAll() {
   return message;
 }
 function showStatus() {
-  if (!busy && updated) $('status').textContent = `Оновлено ${ago(updated)}`;
+  if (busy) return;
+  if (partial) $('status').textContent = partialText();
+  else if (updated) $('status').textContent = `Оновлено ${ago(updated)}`;
 }
 
-const VERSION = 6;
+const VERSION = 7;
 // Свайп униз від верху сторінки, як у мобільних застосунках
 const PULL = 55, MAX = 120, HOLD = 56;
 const ptr = $('ptr'), page = document.querySelector('main');
