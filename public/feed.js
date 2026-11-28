@@ -1,4 +1,4 @@
-// Спільний код для застосунку та scripts/fetch.mjs
+// Розбір RSS/Atom-стрічок та обʼєднання новин
 export const KEEP_DAYS = 30, MAX_TOTAL = 3000, MAX_PER_SOURCE = 100;
 
 const ENT = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', mdash:'—', ndash:'–', hellip:'…', auml:'ä', ouml:'ö', uuml:'ü', Auml:'Ä', Ouml:'Ö', Uuml:'Ü', szlig:'ß', eacute:'é', euro:'€', bdquo:'„', shy:'', rsquo:'’', lsquo:'‘', ldquo:'“', rdquo:'”' };
@@ -48,11 +48,29 @@ export function decodeBytes(buffer, contentType = '') {
   catch { return new TextDecoder().decode(bytes); }
 }
 
-export function readSource(xml, src) {
-  let items = parseFeed(xml, src);
+function select(items, src) {
   if (!items.length) throw new Error('порожня або нерозпізнана стрічка');
   if (src.filter) { const re = new RegExp(src.filter, 'i'); items = items.filter(i => re.test(i.title + ' ' + i.text)); }
   return items.sort((a, b) => b.date.localeCompare(a.date)).slice(0, src.max ?? MAX_PER_SOURCE);
+}
+
+export const readSource = (xml, src) => select(parseFeed(xml, src), src);
+
+// відповідь сервісу rss2json
+export function readJson(data, src) {
+  if (data?.status !== 'ok') throw new Error('rss2json відхилив запит');
+  const items = (data.items ?? []).map(i => {
+    const date = new Date(String(i.pubDate).replace(' ', 'T') + 'Z');
+    const image = i.thumbnail || i.enclosure?.link || '';
+    return {
+      title: cut(plain(String(i.title ?? '')), 200), url: safeUrl(i.link, src.url),
+      date: isNaN(date) ? null : date.toISOString(),
+      text: cut(plain(String(i.description || i.content || ''))),
+      image: /\.(jpe?g|png|webp|gif)/i.test(image) ? safeUrl(image, src.url) : '',
+      source: src.name, cat: src.cat,
+    };
+  }).filter(i => i.title && i.url && i.date);
+  return select(items, src);
 }
 
 export function merge(old, fresh, now = Date.now()) {

@@ -1,6 +1,6 @@
 // Спершу мережа (щоб новини були свіжими), без звʼязку — остання збережена копія
-const CACHE = 'berlin-v7';
-const SHELL = ['./', 'feed.js', 'sources.json', 'manifest.webmanifest', 'icon-192.png', 'data/news.json'];
+const CACHE = 'berlin-v8';
+const SHELL = ['./', 'feed.js', 'sources.json', 'manifest.webmanifest', 'icon-192.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

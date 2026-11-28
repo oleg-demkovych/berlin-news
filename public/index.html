@@ -98,7 +98,7 @@ html,body{overscroll-behavior-y:contain}
   <details class="meta"><summary>Стан джерел</summary><div id="health"></div><p id="gesture"></p></details>
 </main>
 <script type="module">
-import { decodeBytes, readSource, merge } from './feed.js';
+import { decodeBytes, readSource, readJson, merge } from './feed.js';
 // Адреса власного посередника з worker/proxy.js (необов'язково)
 const PROXY = '';
 const $ = id => document.getElementById(id);
@@ -106,7 +106,7 @@ const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('berlin:' + k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('berlin:' + k, JSON.stringify(v)); } catch {} }
 };
-const HOUR = 3600e3, PAGE = 36;
+const PAGE = 36;
 let items = [], cat = 'Усі', limit = PAGE, loadedAt = 0, updated = null, busy = false;
 const saved = new Map(store.get('saved', []));
 const read = new Set(store.get('read', []));
@@ -124,21 +124,28 @@ function ago(d) {
 }
 const web = u => typeof u === 'string' && /^https?:\/\//i.test(u);
 
-// Пряме завантаження: спочатку саме видання, далі посередники (більшість сайтів не дозволяють запити з браузера)
+// Новини завантажуються тільки з пристрою: напряму або через посередника (більшість сайтів не дозволяють запити з браузера)
 const enc = encodeURIComponent;
+const xml = async (r, src) => readSource(decodeBytes(await r.arrayBuffer(), r.headers.get('content-type') || ''), src);
 const ROUTES = [
-  ...(PROXY ? [u => `${PROXY}?url=${enc(u)}`] : []),
-  u => u,
-  u => `https://api.allorigins.win/raw?url=${enc(u)}`,
-  u => `https://api.codetabs.com/v1/proxy/?quest=${enc(u)}`
+  ...(PROXY ? [{ id: 'власний посередник', url: u => `${PROXY}?url=${enc(u)}`, read: xml }] : []),
+  { id: 'напряму', url: u => u, read: xml },
+  { id: 'AllOrigins', url: u => `https://api.allorigins.win/raw?url=${enc(u)}`, read: xml },
+  { id: 'CodeTabs', url: u => `https://api.codetabs.com/v1/proxy/?quest=${enc(u)}`, read: xml },
+  { id: 'rss2json', url: u => `https://api.rss2json.com/v1/api.json?rss_url=${enc(u)}`, read: async (r, src) => readJson(await r.json(), src) }
 ];
+const worked = store.get('routes', {});
 async function fetchSource(src) {
+  // спочатку шлях, який спрацював минулого разу; власний посередник завжди перший
+  const rank = r => r.id === 'власний посередник' ? 0 : r.id === worked[src.name] ? 1 : 2;
   let error;
-  for (const route of ROUTES) {
+  for (const route of [...ROUTES].sort((a, b) => rank(a) - rank(b))) {
     try {
-      const r = await fetch(route(src.url), { signal: AbortSignal.timeout(10000), cache: 'no-store' });
+      const r = await fetch(route.url(src.url), { signal: AbortSignal.timeout(8000), cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return readSource(decodeBytes(await r.arrayBuffer(), r.headers.get('content-type') || ''), src);
+      const list = await route.read(r, src);
+      worked[src.name] = route.id;
+      return { list, via: route.id };
     } catch (e) { error = e; }
   }
   throw error;
@@ -147,21 +154,7 @@ function show() {
   store.set('items', items.slice(0, 800));
   fillSources(); fillCats(); render();
 }
-async function loadSnapshot() {
-  try {
-    const r = await fetch('data/news.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) return false;
-    const data = await r.json();
-    serverTime = data.updated;
-    // копія з сервера лише доповнює: завантажене напряму має перевагу
-    items = merge(data.items.filter(i => web(i.url)), items);
-    show();
-    return true;
-  } catch { return false; }
-}
-let current;
-let serverTime = null, partial = null; // вік копії з сервера та підсумок неповного оновлення
-const partialText = () => `Напряму ${partial.ok} з ${partial.total}` + (serverTime ? ` · копія з сервера: ${ago(serverTime)}` : '');
+let current, partial = null;
 // якщо оновлення вже триває, свайп чекає саме на нього
 function load() {
   if (!busy) current = fetchAll();
@@ -170,35 +163,35 @@ function load() {
 async function fetchAll() {
   busy = true; $('refresh').disabled = true; loadedAt = Date.now();
   $('status').textContent = 'Оновлення…';
-  let message = '';
-  // копія з сервера приходить швидко й одразу показує новини
-  const snapshot = loadSnapshot();
+  let message = 'Не вдалося завантажити новини. Перевірте інтернет і спробуйте ще раз';
   try {
     const r = await fetch('sources.json', { cache: 'no-cache' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const sources = await r.json();
-    let done = 0;
-    const results = await Promise.all(sources.map(async src => {
-      try { const list = await fetchSource(src); return { name: src.name, count: list.length, items: list }; }
-      catch (e) { return { name: src.name, items: [], error: e.message }; }
-      finally { $('status').textContent = `Оновлення ${++done} з ${sources.length}…`; }
+    const before = items, results = [];
+    const combine = () => merge(before, results.flatMap(x => x?.items || []).filter(i => web(i.url)));
+    let next = 0, done = 0, painted = Date.now();
+    // по кілька джерел одночасно, щоб посередники не відхиляли запити
+    await Promise.all(Array.from({ length: 6 }, async () => {
+      while (next < sources.length) {
+        const n = next++, src = sources[n];
+        try { const { list, via } = await fetchSource(src); results[n] = { name: src.name, count: list.length, items: list, via }; }
+        catch (e) { results[n] = { name: src.name, items: [], error: e.message }; }
+        $('status').textContent = `Оновлення ${++done} з ${sources.length}…`;
+        // новини показуємо по мірі надходження, але не зсуваємо список під час читання
+        if (results[n].count && (!items.length || (scrollY < 100 && Date.now() - painted > 1000))) { items = combine(); painted = Date.now(); show(); }
+      }
     }));
     const ok = results.filter(x => !x.error).length;
-    health(results);
+    health(results); store.set('routes', worked);
     if (ok) {
-      items = merge(items, results.flatMap(x => x.items));
+      items = combine();
       updated = new Date().toISOString(); store.set('updated', updated);
+      partial = ok < sources.length ? `${ok} з ${sources.length} джерел` : null;
       show();
+      message = partial ? `Оновлено ${partial}` : 'Оновлено всі джерела';
     }
-    if (ok === sources.length) { partial = null; message = 'Оновлено всі джерела'; }
-    else {
-      const copy = await snapshot;
-      partial = { ok, total: sources.length };
-      message = copy && navigator.onLine ? partialText() : 'Не вдалося оновити. Перевірте інтернет';
-    }
-  } catch (e) {
-    message = 'Не вдалося оновити. Перевірте інтернет';
-  } finally {
+  } catch {} finally {
     busy = false; $('refresh').disabled = false;
     $('status').textContent = message;
     if (!items.length) render();
@@ -206,12 +199,10 @@ async function fetchAll() {
   return message;
 }
 function showStatus() {
-  if (busy) return;
-  if (partial) $('status').textContent = partialText();
-  else if (updated) $('status').textContent = `Оновлено ${ago(updated)}`;
+  if (!busy && updated) $('status').textContent = `Оновлено ${ago(updated)}` + (partial ? ` · ${partial}` : '');
 }
 
-const VERSION = 7;
+const VERSION = 8;
 // Свайп униз від верху сторінки, як у мобільних застосунках
 const PULL = 55, MAX = 120, HOLD = 56;
 const ptr = $('ptr'), page = document.querySelector('main');
@@ -272,7 +263,7 @@ addEventListener('touchend', () => finish('end'));
 addEventListener('touchcancel', () => finish('cancel'));
 $('gesture').textContent = `Версія ${VERSION}`;
 function health(list) {
-  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${s.name}: ${s.error}` : `✓ ${s.name}: ${s.count}` })));
+  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${s.name}: ${s.error}` : `✓ ${s.name}: ${s.count} (${s.via})` })));
 }
 function fillSources() {
   const cur = $('source').value;
@@ -317,7 +308,7 @@ function render() {
     words.every(w => `${i.title} ${i.text} ${i.source}`.toLowerCase().includes(w)));
   $('count').textContent = `Матеріалів: ${list.length}`;
   $('list').replaceChildren(...list.slice(0, limit).map(card));
-  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: items.length || cat === '★ Збережене' ? 'Нічого не знайдено. Змініть фільтри або пошук.' : 'Новин ще немає. Якщо сервер щойно запущено, вони зʼявляться за кілька хвилин.' }));
+  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: items.length || cat === '★ Збережене' ? 'Нічого не знайдено. Змініть фільтри або пошук.' : busy ? 'Завантажуємо новини…' : 'Новин ще немає. Потягніть униз, щоб спробувати ще раз.' }));
   $('more').hidden = list.length <= limit;
 }
 ['q','period','source'].forEach(id => $(id).addEventListener('input', () => { limit = PAGE; render(); }));
@@ -331,7 +322,7 @@ setTheme(store.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ?
 $('theme').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setTheme(t); store.set('theme', t); };
 // Перевірка щохвилини переживає сон комп'ютера. Поки даних немає, пробуємо частіше.
 function tick() {
-  const wait = items.length ? HOUR : 5 * 60e3;
+  const wait = items.length ? 10 * 60e3 : 60e3;
   if (Date.now() - loadedAt >= wait) load(); else showStatus();
 }
 setInterval(tick, 60e3);
