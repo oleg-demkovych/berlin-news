@@ -12,6 +12,9 @@ const files = {
   '/icon-192.png': ['public/icon-192.png', 'image/png'],
   '/icon-512.png': ['public/icon-512.png', 'image/png'],
   '/apple-touch-icon.png': ['public/apple-touch-icon.png', 'image/png'],
+  '/feed.js': ['public/feed.js', 'text/javascript'],
+  '/i18n.js': ['public/i18n.js', 'text/javascript'],
+  '/sources.json': ['public/sources.json', 'application/json'],
   '/data/news.json': ['public/data/news.json', 'application/json'],
 };
 
@@ -21,7 +24,7 @@ createServer(async (req, res) => {
   const f = files[req.url.split('?')[0]];
   try {
     if (!f) throw 0;
-    if (f[1] === 'application/json') await ready; // перший запуск: чекаємо на збір новин
+    if (f[0].endsWith('news.json')) await ready; // перший запуск: чекаємо на збір новин
     const body = await readFile(new URL(f[0], import.meta.url));
     res.writeHead(200, { 'content-type': `${f[1]}; charset=utf-8`, 'cache-control': 'no-store' });
     res.end(body);

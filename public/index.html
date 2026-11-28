@@ -28,8 +28,6 @@ button:hover{background:var(--muted)}button:disabled{opacity:.5;cursor:default}
 svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #install{background:var(--primary);color:var(--pfg);border-color:var(--primary)}
 :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
-#lang::after{content:"";width:30px;height:18px;border-radius:99px;background:radial-gradient(circle at 9px 50%,#fff 6px,transparent 6.5px) var(--ring);transition:background .15s}
-#lang[aria-pressed=true]::after{background:radial-gradient(circle at 21px 50%,#fff 6px,transparent 6.5px) var(--acc)}
 #cats{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:10px}
 .chip{height:32px;white-space:nowrap;border-color:transparent;background:transparent;color:var(--mfg);flex:none}
 .chip[aria-pressed=true]{background:var(--primary);color:var(--pfg)}
@@ -52,61 +50,69 @@ h2 a{color:inherit;text-decoration:none}h2 a:hover{text-decoration:underline;tex
 .desc{color:var(--mfg);font-size:.875rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .read h2,.read img{opacity:.55}
 .foot{margin-top:auto;padding-top:4px;display:flex;align-items:center;gap:8px}
-.full{margin-left:auto;color:var(--fg);font-weight:500;text-decoration:none;padding:6px 8px;border-radius:8px}.full:hover{background:var(--muted)}
-.foot>.meta,.full{white-space:nowrap}
-@media(max-width:380px){.foot>.meta:not(.full){display:none}}
 .star{margin-left:0}.foot>.meta+.star{margin-left:auto}
 .star[aria-pressed=true]{color:var(--acc)}.star[aria-pressed=true] svg{fill:currentColor}
 #more{display:flex;margin:0 auto 20px}
 #empty{padding:48px 16px;text-align:center;grid-column:1/-1;border:1px dashed var(--line);border-radius:14px}
 .skel{height:260px;border-radius:14px;background:var(--muted);animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.45}}
-@media(max-width:640px){.filters{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.label{display:none}#lang{padding:0 8px}h1{overflow:hidden;text-overflow:ellipsis;min-width:0}}
+@media(max-width:640px){.filters{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}.label{display:none}h1{overflow:hidden;text-overflow:ellipsis;min-width:0}}
 @media(max-width:380px){h1{font-size:0}h1{margin-right:auto}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 details{padding-block:8px 32px}
 [hidden]{display:none!important}
+html,body{overscroll-behavior-y:contain}
+#ptr{position:fixed;z-index:10;left:50%;top:env(safe-area-inset-top);transform:translate(-50%,-60px);background:var(--primary);color:var(--pfg);border-radius:99px;padding:8px 16px;font-size:.8125rem;font-weight:600;width:max-content;max-width:92vw;text-align:center;box-shadow:0 6px 20px #0003;opacity:0;pointer-events:none;transition:transform .2s,opacity .2s}
+#ptr.drag{transition:none}
 </style>
 </head>
 <body>
+<div id="ptr" aria-hidden="true"></div>
 <div class="top"><div class="wrap">
   <header>
     <span class="logo" aria-hidden="true">Б</span>
-    <h1>Берлін сьогодні</h1>
-    <button id="lang" aria-label="Переклад українською" title="Переклад українською">UA<span class="label">переклад</span></button>
-    <button id="install" hidden>Встановити</button>
-    <button id="refresh" class="icon" aria-label="Оновити" title="Оновити"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button>
-    <button id="theme" class="icon" aria-label="Змінити тему" title="Змінити тему"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+    <h1 data-i18n="title">Берлін сьогодні</h1>
+    <select id="lang" data-aria="language"></select>
+    <button id="install" data-i18n="install" hidden>Встановити</button>
+    <button id="refresh" class="icon" data-aria="refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button>
+    <button id="theme" class="icon" data-aria="theme"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
   </header>
-  <nav id="cats" aria-label="Категорії"></nav>
+  <nav id="cats" data-aria="categories"></nav>
 </div></div>
 <main class="wrap">
   <div class="filters">
-    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" placeholder="Пошук: BVG, Mitte, Miete…" aria-label="Пошук"></label>
-    <select id="period" aria-label="Період"><option value="0">За весь час</option><option value="1">За 24 години</option><option value="7">За тиждень</option><option value="30">За місяць</option></select>
-    <select id="source" aria-label="Джерело"></select>
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" data-placeholder="searchHint" data-aria="search"></label>
+    <select id="period" data-aria="period"><option value="0" data-i18n="allTime">За весь час</option><option value="1" data-i18n="day">За 24 години</option><option value="7" data-i18n="week">За тиждень</option><option value="30" data-i18n="month">За місяць</option></select>
+    <select id="source" data-aria="source"></select>
   </div>
-  <div class="info meta"><span id="count"></span><span id="status" role="status">Завантаження…</span></div>
+  <div class="info meta"><span id="count"></span><span id="status" role="status" data-i18n="loading">Завантаження…</span></div>
   <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
-  <button id="more" hidden>Показати ще</button>
-  <details class="meta"><summary>Стан джерел</summary><div id="health"></div></details>
+  <button id="more" data-i18n="more" hidden>Показати ще</button>
+  <details class="meta"><summary data-i18n="health">Стан джерел</summary><div id="health"></div></details>
 </main>
-<script>
+<script type="module">
+import { decodeBytes, readSource, merge } from './feed.js';
+import { LANGS, LOCALES, translator, detect } from './i18n.js';
+// Адреса власного посередника з worker/proxy.js (необов'язково)
+const PROXY = '';
 const $ = id => document.getElementById(id);
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('berlin:' + k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('berlin:' + k, JSON.stringify(v)); } catch {} }
 };
 const HOUR = 3600e3, PAGE = 36;
-let uk = store.get('uk', false);
 let items = [], cat = 'Усі', limit = PAGE, loadedAt = 0, updated = null, busy = false;
 const saved = new Map(store.get('saved', []));
 const read = new Set(store.get('read', []));
 const lastVisit = store.get('visit', 0);
 store.set('visit', Date.now());
 
+let lang = store.get('lang', null);
+if (!Object.hasOwn(LANGS, lang)) lang = detect(navigator.languages);
+let t = translator(lang), rtf, lastHealth = [], lastStatus = null;
+// статус зберігаємо ключем, щоб перекласти його після зміни мови
+function setStatus(key, vars) { lastStatus = [key, vars]; $('status').removeAttribute('data-i18n'); $('status').textContent = t(key, vars); }
 const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
-const rtf = new Intl.RelativeTimeFormat('uk', { numeric: 'auto' });
 function ago(d) {
   const m = Math.round((Date.parse(d) - Date.now()) / 60000);
   if (Math.abs(m) < 60) return rtf.format(m, 'minute');
@@ -115,65 +121,147 @@ function ago(d) {
 }
 const web = u => typeof u === 'string' && /^https?:\/\//i.test(u);
 
-async function load() {
-  if (busy) return;
-  busy = true; $('refresh').disabled = true; $('status').textContent = 'Оновлення…';
+// Пряме завантаження: спочатку саме видання, далі посередники (більшість сайтів не дозволяють запити з браузера)
+const enc = encodeURIComponent;
+const ROUTES = [
+  ...(PROXY ? [u => `${PROXY}?url=${enc(u)}`] : []),
+  u => u,
+  u => `https://api.allorigins.win/raw?url=${enc(u)}`,
+  u => `https://api.codetabs.com/v1/proxy/?quest=${enc(u)}`
+];
+async function fetchSource(src) {
+  let error;
+  for (const route of ROUTES) {
+    try {
+      const r = await fetch(route(src.url), { signal: AbortSignal.timeout(10000), cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return readSource(decodeBytes(await r.arrayBuffer(), r.headers.get('content-type') || ''), src);
+    } catch (e) { error = e; }
+  }
+  throw error;
+}
+function show() {
+  store.set('items', items.slice(0, 800));
+  fillSources(); fillCats(); render();
+}
+async function loadSnapshot() {
   try {
     const r = await fetch('data/news.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) return false;
     const data = await r.json();
-    items = data.items.filter(i => web(i.url)).sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-    updated = data.updated; loadedAt = Date.now();
-    fillSources(); fillCats(); health(data.status || []); render();
-    busy = false; showStatus();
+    // копія з сервера лише доповнює: завантажене напряму має перевагу
+    items = merge(data.items.filter(i => web(i.url)), items);
+    show();
+    return true;
+  } catch { return false; }
+}
+async function load() {
+  if (busy) return;
+  busy = true; $('refresh').disabled = true; loadedAt = Date.now();
+  setStatus('updating');
+  let message = ['failed'];
+  try {
+    const r = await fetch('sources.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const sources = await r.json();
+    let done = 0;
+    const results = await Promise.all(sources.map(async src => {
+      try { const list = await fetchSource(src); return { name: src.name, count: list.length, items: list }; }
+      catch (e) { return { name: src.name, items: [], error: e.message }; }
+      finally { setStatus('progress', { n: ++done, total: sources.length }); }
+    }));
+    const ok = results.filter(x => !x.error).length;
+    health(results);
+    if (ok) {
+      items = merge(items, results.flatMap(x => x.items));
+      updated = new Date().toISOString(); store.set('updated', updated);
+      show();
+    }
+    if (ok === sources.length) message = ['updatedAll'];
+    else {
+      const copy = await loadSnapshot();
+      message = ok ? ['updatedSome', { n: ok, total: sources.length }]
+        : [copy && navigator.onLine ? 'copy' : 'failed'];
+    }
   } catch (e) {
-    $('status').textContent = `Не вдалося оновити (${e.message}). Спробуємо ще раз за кілька хвилин.`;
-    loadedAt = Date.now() - HOUR + 5 * 60e3;
+    message = ['failed'];
+  } finally {
+    busy = false; $('refresh').disabled = false;
+    setStatus(...message);
     if (!items.length) render();
-  } finally { busy = false; $('refresh').disabled = false; }
+  }
+  return t(...message);
 }
 function showStatus() {
-  if (!updated || busy) return;
-  const left = Math.max(0, Math.ceil((loadedAt + HOUR - Date.now()) / 60000));
-  $('status').textContent = `Дані ${ago(updated)} · перевірка через ${left} хв`;
+  if (!busy && updated) setStatus('updatedAgo', { time: ago(updated) });
 }
+
+// Свайп униз від верху сторінки
+let start = null, pull = 0, hideTimer;
+const ptr = $('ptr');
+function bubble(text, y) { ptr.textContent = text; ptr.style.opacity = y ? 1 : 0; ptr.style.transform = `translate(-50%,${y || -60}px)`; }
+addEventListener('touchstart', e => {
+  start = !busy && scrollY <= 0 && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  pull = 0;
+}, { passive: true });
+addEventListener('touchmove', e => {
+  if (!start) return;
+  if (e.touches.length > 1) { start = null; return bubble('', 0); }
+  const dx = e.touches[0].clientX - start.x, dy = e.touches[0].clientY - start.y;
+  // горизонтальне гортання категорій не чіпаємо
+  if (!pull && (Math.abs(dx) > Math.abs(dy) || dy < 0)) { if (Math.abs(dx) > 8 || dy < -8) start = null; return; }
+  if (e.cancelable) e.preventDefault();
+  pull = Math.max(0, dy);
+  clearTimeout(hideTimer); ptr.classList.add('drag');
+  bubble(t(pull > 90 ? 'release' : 'pull'), Math.min(pull * .6, 80));
+}, { passive: false });
+async function release(cancelled) {
+  if (!start) return;
+  const go = !cancelled && pull > 90;
+  start = null; pull = 0; ptr.classList.remove('drag');
+  if (!go) return bubble(ptr.textContent, 0);
+  bubble(t('updating'), 70);
+  bubble(await load() || t('updating'), 70);
+  hideTimer = setTimeout(() => bubble(ptr.textContent, 0), 2500);
+}
+addEventListener('touchend', () => release(false));
+addEventListener('touchcancel', () => release(true));
 function health(list) {
-  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${s.name}: ${s.error}` : `✓ ${s.name}: ${s.count}` })));
+  lastHealth = list;
+  const why = e => e === 'порожня або нерозпізнана стрічка' ? t('badFeed') : e;
+  $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${t(s.name)}: ${why(s.error)}` : `✓ ${t(s.name)}: ${s.count}` })));
 }
 function fillSources() {
   const cur = $('source').value;
-  const names = [...new Set(items.map(i => i.source))].sort((a, b) => a.localeCompare(b, 'uk'));
-  $('source').replaceChildren(new Option('Усі джерела', ''), ...names.map(n => new Option(n, n)));
+  const names = [...new Set(items.map(i => i.source))].sort((a, b) => t(a).localeCompare(t(b), LOCALES[lang]));
+  $('source').replaceChildren(new Option(t('allSources'), ''), ...names.map(n => new Option(t(n), n)));
   $('source').value = names.includes(cur) ? cur : '';
 }
 function fillCats() {
   const cats = ['Усі', '★ Збережене', ...new Set(items.map(i => i.cat))];
   $('cats').replaceChildren(...cats.map(c => {
-    const b = el('button', { className: 'chip', textContent: c, onclick() { cat = c; limit = PAGE; fillCats(); render(); } });
+    const b = el('button', { className: 'chip', textContent: t(c === 'Усі' ? 'all' : c === '★ Збережене' ? 'saved' : c), onclick() { cat = c; limit = PAGE; fillCats(); render(); } });
     b.setAttribute('aria-pressed', c === cat);
     return b;
   }));
 }
 function card(i) {
-  // у збереженому може лежати стара копія без перекладу
-  const t = items.find(x => x.url === i.url) || i;
-  const tr = uk && t.titleUk;
   const a = el('article', { className: read.has(i.url) ? 'read' : '' });
   if (web(i.image)) a.append(el('img', { src: i.image, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer', onerror() { this.remove(); } }));
   const mark = () => { read.add(i.url); a.className = 'read'; store.set('read', [...read].slice(-3000)); };
-  const link = el('a', { href: i.url, target: '_blank', rel: 'noopener noreferrer', textContent: tr ? t.titleUk : i.title, title: tr ? i.title : '', lang: tr ? 'uk' : '', onclick: mark, onauxclick: mark });
+  const link = el('a', { href: i.url, target: '_blank', rel: 'noopener noreferrer', textContent: i.title, onclick: mark, onauxclick: mark });
   const star = el('button', { className: 'icon star', onclick() {
     saved.has(i.url) ? saved.delete(i.url) : saved.set(i.url, i);
     store.set('saved', [...saved]); paint();
     if (cat === '★ Збережене') render();
   } });
-  const paint = () => { const on = saved.has(i.url); star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', on ? 'Прибрати зі збереженого' : 'Зберегти'); };
+  const paint = () => { const on = saved.has(i.url); star.setAttribute('aria-pressed', on); star.setAttribute('aria-label', t(on ? 'unsave' : 'save')); };
   star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>'; // сталий рядок, без даних зі стрічок
   paint();
-  const meta = el('div', { className: 'badges' }, el('span', { className: 'badge', textContent: i.source }), el('span', { className: 'meta', textContent: ago(i.date) + (tr ? ' · автопереклад' : '') }));
-  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'badge new', textContent: 'нове' }));
-  a.append(el('div', { className: 'body' }, meta, el('h2', {}, link), el('p', { className: 'desc', textContent: (tr ? t.textUk : i.text) || '' }),
-    el('div', { className: 'foot' }, el('span', { className: 'meta', textContent: i.cat }), ...(i.cat === 'Українською' ? [] : [el('a', { className: 'meta full', target: '_blank', rel: 'noopener noreferrer', textContent: 'Стаття українською ↗', href: 'https://translate.google.com/translate?sl=auto&tl=uk&u=' + encodeURIComponent(i.url), onclick: mark })]), star)));
+  const meta = el('div', { className: 'badges' }, el('span', { className: 'badge', textContent: t(i.source) }), el('span', { className: 'meta', textContent: ago(i.date) }));
+  if (lastVisit && Date.parse(i.date) > lastVisit) meta.append(el('span', { className: 'badge new', textContent: t('new') }));
+  a.append(el('div', { className: 'body' }, meta, el('h2', {}, link), el('p', { className: 'desc', textContent: i.text || '' }),
+    el('div', { className: 'foot' }, el('span', { className: 'meta', textContent: t(i.cat) }), star)));
   return a;
 }
 function render() {
@@ -183,18 +271,32 @@ function render() {
     (cat === 'Усі' || cat === '★ Збережене' || i.cat === cat) &&
     (!src || i.source === src) &&
     (!days || Date.now() - Date.parse(i.date) < days * 864e5) &&
-    words.every(w => `${i.title} ${i.text} ${i.titleUk || ''} ${i.textUk || ''} ${i.source}`.toLowerCase().includes(w)));
-  $('count').textContent = `Матеріалів: ${list.length}`;
+    words.every(w => `${i.title} ${i.text} ${i.source} ${t(i.source)}`.toLowerCase().includes(w)));
+  $('count').textContent = t('count', { n: list.length });
   $('list').replaceChildren(...list.slice(0, limit).map(card));
-  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: items.length || cat === '★ Збережене' ? 'Нічого не знайдено. Змініть фільтри або пошук.' : 'Новин ще немає. Якщо сервер щойно запущено, вони зʼявляться за кілька хвилин.' }));
+  if (!list.length) $('list').append(el('p', { id: 'empty', className: 'meta', textContent: t(items.length || cat === '★ Збережене' ? 'nothing' : 'noNews') }));
   $('more').hidden = list.length <= limit;
 }
+function applyLang() {
+  t = translator(lang);
+  rtf = new Intl.RelativeTimeFormat(LOCALES[lang], { numeric: 'auto' });
+  document.documentElement.lang = LOCALES[lang];
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(n => n.textContent = t(n.dataset.i18n));
+  document.querySelectorAll('[data-placeholder]').forEach(n => n.placeholder = t(n.dataset.placeholder));
+  document.querySelectorAll('[data-aria]').forEach(n => { n.setAttribute('aria-label', t(n.dataset.aria)); n.title = t(n.dataset.aria); });
+}
+$('lang').replaceChildren(...Object.entries(LANGS).map(([value, label]) => new Option(label, value)));
+$('lang').value = lang;
+$('lang').onchange = () => {
+  lang = $('lang').value; store.set('lang', lang); applyLang();
+  fillSources(); fillCats(); health(lastHealth); if (items.length || cat === '★ Збережене') render();
+  if (busy) setStatus(...lastStatus); else showStatus();
+};
+applyLang();
 ['q','period','source'].forEach(id => $(id).addEventListener('input', () => { limit = PAGE; render(); }));
 $('more').onclick = () => { limit += PAGE; render(); };
 $('refresh').onclick = load;
-const paintLang = () => $('lang').setAttribute('aria-pressed', uk);
-$('lang').onclick = () => { uk = !uk; store.set('uk', uk); paintLang(); render(); };
-paintLang();
 const setTheme = t => {
   document.documentElement.dataset.theme = t;
   document.querySelector('meta[name=theme-color]').content = t === 'dark' ? '#09090b' : '#fafafa';
@@ -203,7 +305,7 @@ setTheme(store.get('theme', matchMedia('(prefers-color-scheme: dark)').matches ?
 $('theme').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setTheme(t); store.set('theme', t); };
 // Перевірка щохвилини переживає сон комп'ютера. Поки даних немає, пробуємо частіше.
 function tick() {
-  const wait = items.length ? HOUR : 60e3;
+  const wait = items.length ? HOUR : 5 * 60e3;
   if (Date.now() - loadedAt >= wait) load(); else showStatus();
 }
 setInterval(tick, 60e3);
@@ -214,7 +316,10 @@ let prompt_;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt_ = e; $('install').hidden = false; });
 $('install').onclick = async () => { $('install').hidden = true; await prompt_?.prompt(); prompt_ = null; };
 addEventListener('appinstalled', () => $('install').hidden = true);
-fillCats(); load();
+items = merge([], store.get('items', []));
+updated = store.get('updated', null);
+fillSources(); fillCats(); if (items.length) render();
+loadSnapshot().then(load);
 </script>
 </body>
 </html>
