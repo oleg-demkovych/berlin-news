@@ -95,7 +95,7 @@ html,body{overscroll-behavior-y:contain}
   <div class="info meta"><span id="count"></span><span id="status" role="status">Завантаження…</span></div>
   <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
   <button id="more" hidden>Показати ще</button>
-  <details class="meta"><summary>Стан джерел</summary><div id="health"></div></details>
+  <details class="meta"><summary>Стан джерел</summary><div id="health"></div><p id="gesture"></p></details>
 </main>
 <script type="module">
 import { decodeBytes, readSource, merge } from './feed.js';
@@ -206,10 +206,11 @@ function showStatus() {
   if (!busy && updated) $('status').textContent = `Оновлено ${ago(updated)}`;
 }
 
+const VERSION = 6;
 // Свайп униз від верху сторінки, як у мобільних застосунках
-const PULL = 70, MAX = 120, HOLD = 56;
+const PULL = 55, MAX = 120, HOLD = 56;
 const ptr = $('ptr'), page = document.querySelector('main');
-let start = null, dist = 0;
+let start = null, dist = 0, gesture = null;
 function place(y, animate) {
   ptr.classList.toggle('anim', animate); page.classList.toggle('anim', animate);
   const p = Math.min(y / PULL, 1);
@@ -230,14 +231,17 @@ async function refreshByPull() {
   setTimeout(() => ptr.classList.remove('spin', 'ready'), 250);
 }
 addEventListener('touchstart', e => {
-  start = !ptr.classList.contains('spin') && scrollY <= 0 && e.touches.length === 1 && !e.target.closest('.top,select,input')
+  start = !ptr.classList.contains('spin') && scrollY < 2 && e.touches.length === 1
     ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
   dist = 0;
+  gesture = { moves: 0, dy: 0, top: Math.round(scrollY * 10) / 10, end: '…' };
 }, { passive: true });
 addEventListener('touchmove', e => {
+  if (gesture) gesture.moves++;
   if (!start) return;
   if (e.touches.length > 1) return release(true);
   const dx = e.touches[0].clientX - start.x, dy = e.touches[0].clientY - start.y;
+  gesture.dy = Math.round(dy);
   if (!dist && (Math.abs(dx) > Math.abs(dy) || dy <= 0)) { if (Math.abs(dx) > 8 || dy < -8) start = null; return; }
   if (e.cancelable) e.preventDefault();
   // що далі тягнемо, то більший опір
@@ -254,8 +258,14 @@ function release(cancelled) {
   else { ptr.classList.remove('ready'); place(0, true); }
   dist = 0;
 }
-addEventListener('touchend', () => release(false));
-addEventListener('touchcancel', () => release(true));
+// останній жест видно в «Стан джерел»: допомагає знайти проблему на конкретному телефоні
+function finish(type) {
+  if (gesture) { gesture.end = type; $('gesture').textContent = `Версія ${VERSION} · жест: старт ${gesture.top}, рухів ${gesture.moves}, вниз ${gesture.dy}, ${gesture.end}`; }
+  release(type === 'cancel');
+}
+addEventListener('touchend', () => finish('end'));
+addEventListener('touchcancel', () => finish('cancel'));
+$('gesture').textContent = `Версія ${VERSION}`;
 function health(list) {
   $('health').replaceChildren(...list.map(s => el('p', { textContent: s.error ? `✗ ${s.name}: ${s.error}` : `✓ ${s.name}: ${s.count}` })));
 }
